@@ -1139,7 +1139,7 @@ Jakarta · Hangzhou · Bahasa-first.
 /* ================================================================
    STATE
 ================================================================ */
-const STORAGE_KEY = 'liren.grid.planner.v1';
+const STORAGE_KEY = 'liren.grid.planner.v2';
 
 function uid() { return 'p' + Math.random().toString(36).slice(2, 9); }
 
@@ -1161,18 +1161,30 @@ const DESIGN_TEMPLATES = [
 ];
 
 const SEED_POSTS_META = [
-  { type: 'reel',     pillar: 'HOT-TAKE',    caption: '6 meeting Senin, 0 catatan manual. Agent-nya yang rangkum semuanya. Link di bio.' },
-  { type: 'carousel', pillar: 'HOT-TAKE',    caption: 'Unpopular opinion: posting tiap hari ≠ konsistensi.' },
-  { type: 'carousel', pillar: 'HOT-TAKE',    caption: 'Shadowban itu myth. Content yang ga di-save itu nyata.' },
-  { type: 'reel',     pillar: 'LIST',        caption: '30 cara buka LinkedIn post yang gak cringe. Swipe atau download PDF gratis di bio.' },
-  { type: 'carousel', pillar: 'TEARDOWN',    caption: 'Kenapa Reel Vina Muliana tembus 2.4M views? Teardown 6 slide.' },
-  { type: 'reel',     pillar: 'TOOL-DROP',   caption: '5 tools AI yang gue pakai minggu ini. Agent Meeting jadi MVP.' },
-  { type: 'still',    pillar: 'PHILOSOPHY',  caption: '己欲立而立人 — untuk membangun diri sendiri, bantu orang lain bangkit dulu. Konghucu, 2500 tahun yang lalu.' },
-  { type: 'carousel', pillar: 'EDUCATION',   caption: '11 hal yang kamu kira AI udah bisa. Spoiler: belum.' },
-  { type: 'reel',     pillar: 'FOUNDER',     caption: 'Note dari kamar kos di Hangzhou. Minggu pertama bangun Liren.' },
-  { type: 'carousel', pillar: 'EDUCATION',   caption: 'Agent ≠ Chatbot. 6 slide untuk ngerti bedanya.' },
-  { type: 'reel',     pillar: 'TREND-RIFF',  caption: '2 jam nonton Timothy Ronald. 3 hal soal content yang gue curi.' },
-  { type: 'still',    pillar: 'APHORISM',    caption: 'Volume tanpa pemahaman cuma noise. — Liren, Week 02.' },
+  { type: 'reel',     pillar: 'HOT-TAKE',    caption: '6 meeting Senin, 0 catatan manual. Agent-nya yang rangkum semuanya. Link di bio.',
+    idea: '', script: '', why: '' },
+  { type: 'carousel', pillar: 'HOT-TAKE',    caption: 'Unpopular opinion: posting tiap hari ≠ konsistensi.',
+    idea: '', script: '', why: '' },
+  { type: 'carousel', pillar: 'HOT-TAKE',    caption: 'Shadowban itu myth. Content yang ga di-save itu nyata.',
+    idea: '', script: '', why: '' },
+  { type: 'reel',     pillar: 'LIST',        caption: '30 cara buka LinkedIn post yang gak cringe. Swipe atau download PDF gratis di bio.',
+    idea: '', script: '', why: '' },
+  { type: 'carousel', pillar: 'TEARDOWN',    caption: 'Kenapa Reel Vina Muliana tembus 2.4M views? Teardown 6 slide.',
+    idea: '', script: '', why: '' },
+  { type: 'reel',     pillar: 'TOOL-DROP',   caption: '5 tools AI yang gue pakai minggu ini. Agent Meeting jadi MVP.',
+    idea: '', script: '', why: '' },
+  { type: 'still',    pillar: 'PHILOSOPHY',  caption: '己欲立而立人 — untuk membangun diri sendiri, bantu orang lain bangkit dulu. Konghucu, 2500 tahun yang lalu.',
+    idea: '', script: '', why: '' },
+  { type: 'carousel', pillar: 'EDUCATION',   caption: '11 hal yang kamu kira AI udah bisa. Spoiler: belum.',
+    idea: '', script: '', why: '' },
+  { type: 'reel',     pillar: 'FOUNDER',     caption: 'Note dari kamar kos di Hangzhou. Minggu pertama bangun Liren.',
+    idea: '', script: '', why: '' },
+  { type: 'carousel', pillar: 'EDUCATION',   caption: 'Agent ≠ Chatbot. 6 slide untuk ngerti bedanya.',
+    idea: '', script: '', why: '' },
+  { type: 'reel',     pillar: 'TREND-RIFF',  caption: '2 jam nonton Timothy Ronald. 3 hal soal content yang gue curi.',
+    idea: '', script: '', why: '' },
+  { type: 'still',    pillar: 'APHORISM',    caption: 'Volume tanpa pemahaman cuma noise. — Liren, Week 02.',
+    idea: '', script: '', why: '' },
 ];
 
 function defaultState() {
@@ -1188,6 +1200,10 @@ function defaultState() {
       type: m.type,
       pillar: m.pillar,
       caption: m.caption,
+      idea: m.idea || '',
+      script: m.script || '',
+      why: m.why || '',
+      hidden: false,
       slides: [{ kind: 'design', templateIdx: i }],
     })),
   };
@@ -1198,11 +1214,31 @@ let state = loadState();
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    if (!parsed.profile || !Array.isArray(parsed.posts)) return defaultState();
-    return parsed;
-  } catch { return defaultState(); }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.profile && Array.isArray(parsed.posts)) {
+        // Defensive: ensure v2 fields exist even on partial/older v2 payloads
+        parsed.posts = parsed.posts.map(p => ({
+          idea: '', script: '', why: '', hidden: false, ...p
+        }));
+        return parsed;
+      }
+    }
+    // Migrate from v1
+    const v1 = localStorage.getItem('liren.grid.planner.v1');
+    if (v1) {
+      const parsed = JSON.parse(v1);
+      if (parsed.profile && Array.isArray(parsed.posts)) {
+        parsed.posts = parsed.posts.map(p => ({
+          idea: '', script: '', why: '', hidden: false, ...p
+        }));
+        // Persist migrated state under the v2 key; keep v1 for recovery
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch {}
+        return parsed;
+      }
+    }
+  } catch {}
+  return defaultState();
 }
 
 function saveState() {
