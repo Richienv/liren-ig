@@ -128,7 +128,57 @@
     background: var(--ig-verified);
     clip-path: polygon(50% 0, 61% 10%, 75% 7%, 82% 20%, 95% 24%, 93% 39%, 100% 50%, 93% 61%, 95% 76%, 82% 80%, 75% 93%, 61% 90%, 50% 100%, 39% 90%, 25% 93%, 18% 80%, 5% 76%, 7% 61%, 0 50%, 7% 39%, 5% 24%, 18% 20%, 25% 7%, 39% 10%);
   }
-  .dots { color: var(--ig-fg); font-size: 20px; letter-spacing: 2px; margin-left: 6px; }
+  .dots { color: var(--ig-fg); font-size: 20px; letter-spacing: 2px; margin-left: 6px; cursor: pointer; user-select: none; }
+
+  /* ============ ACTION SHEET (profile ⋯ menu) ============ */
+  .sheet-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 90;
+    display: none;
+  }
+  .sheet-backdrop.open { display: block; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #1c1c1c;
+    border-radius: 16px 16px 0 0;
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+    animation: sheetUp 0.18s ease-out;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  @keyframes sheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: #444;
+    border-radius: 2px;
+    margin: 0 auto 10px;
+  }
+  .sheet-item {
+    display: block;
+    width: 100%;
+    padding: 16px 20px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid #2a2a2a;
+    color: #fff;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .sheet-item:first-of-type { border-top: none; }
+  .sheet-item:hover { background: #232323; }
+  .sheet-item.danger { color: var(--ig-red); }
+  .sheet-item.cancel {
+    color: var(--ig-muted);
+    font-weight: 600;
+    text-align: center;
+    border-top: 8px solid #000;
+  }
 
   .profile-stats {
     display: flex;
@@ -843,7 +893,7 @@
         <button class="btn btn-primary">Following</button>
         <button class="btn btn-ghost">Message</button>
         <button class="btn btn-icon">+</button>
-        <span class="dots">⋯</span>
+        <span class="dots" id="profileDots" role="button" tabindex="0">⋯</span>
       </div>
 
       <div class="profile-stats">
@@ -965,6 +1015,19 @@ Jakarta · Hangzhou · Bahasa-first.
         <button class="done" id="doneBtn">Done</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ACTION SHEET (profile ⋯ menu) -->
+<div class="sheet-backdrop" id="sheetBackdrop">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <button class="sheet-item" data-action="new">+ New post</button>
+    <button class="sheet-item" data-action="hidden">Hidden posts</button>
+    <button class="sheet-item" data-action="export">Export JSON</button>
+    <button class="sheet-item" data-action="import">Import JSON</button>
+    <button class="sheet-item danger" data-action="reset">Reset to default</button>
+    <button class="sheet-item cancel" data-action="cancel">Cancel</button>
   </div>
 </div>
 
@@ -1629,6 +1692,10 @@ function addNewPost() {
     type: 'still',
     pillar: 'HOT-TAKE',
     caption: '',
+    idea: '',
+    script: '',
+    why: '',
+    hidden: false,
     slides: [{ kind: 'design', templateIdx: Math.floor(Math.random() * DESIGN_TEMPLATES.length) }],
   };
   state.posts.push(post);
@@ -1637,6 +1704,35 @@ function addNewPost() {
   renderGrid();
   openModal(post.id);
 }
+
+// Stub — implemented in Task 12 (hidden posts view).
+function openHiddenView() { /* implemented in Task 12 */ }
+
+/* ================================================================
+   ACTION SHEET (profile ⋯ menu)
+================================================================ */
+const sheetBackdrop = document.getElementById('sheetBackdrop');
+function openSheet() { sheetBackdrop.classList.add('open'); }
+function closeSheet() { sheetBackdrop.classList.remove('open'); }
+
+document.getElementById('profileDots').addEventListener('click', openSheet);
+document.getElementById('profileDots').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSheet(); }
+});
+sheetBackdrop.addEventListener('click', (e) => {
+  if (e.target === sheetBackdrop) closeSheet();
+});
+document.querySelectorAll('.sheet-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.action;
+    closeSheet();
+    if (action === 'new') addNewPost();
+    else if (action === 'hidden') openHiddenView();
+    else if (action === 'export') doExport();
+    else if (action === 'import') jsonPicker.click();
+    else if (action === 'reset') doReset();
+  });
+});
 
 /* ================================================================
    UTIL
