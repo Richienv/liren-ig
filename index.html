@@ -901,31 +901,58 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-shrink: 0;
   }
-  .me-footer .del {
-    background: transparent;
-    border: 1px solid #2a2a2a;
-    color: var(--ig-red);
+  .footer-btn {
     padding: 8px 14px;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+    font-family: inherit;
+    border: 1px solid #2a2a2a;
+    background: transparent;
+    color: #fff;
   }
-  .me-footer .del:hover { background: #3a1a1d; border-color: #6b2530; }
-  .me-footer .done {
+  .footer-btn.hide {
+    color: var(--ig-muted);
+  }
+  .footer-btn.hide:hover { background: #1a1a1a; color: #fff; }
+  .footer-btn.del {
+    color: var(--ig-red);
+  }
+  .footer-btn.del:hover { background: #3a1a1d; border-color: #6b2530; }
+  .footer-btn.done {
     background: var(--ig-blue);
     color: #fff;
     border: none;
     padding: 8px 18px;
-    border-radius: 6px;
     font-size: 13px;
+    margin-left: auto;
+  }
+  .footer-btn.done:hover { background: var(--ig-blue-hover); }
+
+  /* Grid toolbar — "Show hidden · N" pill above the grid */
+  .grid-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 0 4px;
+  }
+  .toggle-hidden {
+    background: transparent;
+    border: 1px solid var(--ig-border);
+    color: var(--ig-muted);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
     font-weight: 600;
+    letter-spacing: 0.06em;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
     cursor: pointer;
   }
-  .me-footer .done:hover { background: var(--ig-blue-hover); }
+  .toggle-hidden:hover { color: #fff; border-color: #444; }
 
   /* Toast */
   .toast {
@@ -1066,6 +1093,11 @@ Jakarta · Hangzhou · Bahasa-first.
     </div>
   </div>
 
+  <!-- GRID TOOLBAR (toggle hidden posts) -->
+  <div class="grid-toolbar" id="gridToolbar" hidden>
+    <button class="toggle-hidden" id="toggleHiddenBtn">Show hidden · 0</button>
+  </div>
+
   <!-- GRID (rendered dynamically) -->
   <div class="grid" id="grid"></div>
 
@@ -1164,8 +1196,9 @@ Jakarta · Hangzhou · Bahasa-first.
         </div>
       </div>
       <div class="me-footer">
-        <button class="del" id="deletePostBtn">Delete Post</button>
-        <button class="done" id="doneBtn">Done</button>
+        <button class="footer-btn hide" id="hideBtn">Hide</button>
+        <button class="footer-btn del" id="deletePostBtn">Delete</button>
+        <button class="footer-btn done" id="doneBtn">Done</button>
       </div>
     </div>
   </div>
@@ -1414,7 +1447,8 @@ function renderProfile() {
   mini.appendChild(miniImg);
 
   document.getElementById('miniUsername').textContent = state.profile.username;
-  document.getElementById('statPosts').textContent = state.posts.length;
+  // Posts stat reflects only visible posts — hidden posts are a soft delete.
+  document.getElementById('statPosts').textContent = state.posts.filter(p => !p.hidden).length;
   const metaCount = document.getElementById('metaCount');
   if (metaCount) metaCount.textContent = `${state.posts.length} POSTS · PLAN MODE`;
 }
@@ -1442,14 +1476,34 @@ function slideBgClass(slide) {
   return tpl.bg;
 }
 
+let showHidden = false;
+
+function hiddenCount() {
+  return state.posts.filter(p => p.hidden).length;
+}
+
+function renderGridToolbar() {
+  const toolbar = document.getElementById('gridToolbar');
+  const btn = document.getElementById('toggleHiddenBtn');
+  const n = hiddenCount();
+  if (n === 0) {
+    toolbar.hidden = true;
+    showHidden = false;
+    return;
+  }
+  toolbar.hidden = false;
+  btn.textContent = showHidden ? `Hide hidden · ${n}` : `Show hidden · ${n}`;
+}
+
 function renderGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-  state.posts.forEach((post, idx) => {
+  const list = showHidden ? state.posts : state.posts.filter(p => !p.hidden);
+  list.forEach((post, idx) => {
     const firstSlide = post.slides[0] || { kind: 'design', templateIdx: 0 };
     const bgClass = slideBgClass(firstSlide);
     const tile = document.createElement('div');
-    tile.className = `tile ${bgClass}`;
+    tile.className = `tile ${bgClass}${post.hidden ? ' is-hidden' : ''}`;
     tile.dataset.postId = post.id;
     tile.dataset.index = idx;
     tile.style.touchAction = 'pan-y';
@@ -1487,6 +1541,8 @@ function renderGrid() {
   addTile.innerHTML = `<div class="plus">+</div><div class="lbl">New Post</div>`;
   addTile.addEventListener('click', addNewPost);
   grid.appendChild(addTile);
+
+  renderGridToolbar();
 }
 
 /* ================================================================
@@ -1700,6 +1756,13 @@ function renderModal() {
   document.getElementById('scriptField').hidden = post.type !== 'reel';
 
   renderSlidesList();
+  renderHideBtn();
+}
+
+function renderHideBtn() {
+  const p = currentPost(); if (!p) return;
+  const btn = document.getElementById('hideBtn');
+  if (btn) btn.textContent = p.hidden ? 'Unhide' : 'Hide';
 }
 
 function renderSlidesList() {
@@ -1864,6 +1927,20 @@ document.getElementById('deletePostBtn').addEventListener('click', () => {
   renderGrid();
 });
 
+document.getElementById('hideBtn').addEventListener('click', () => {
+  const p = currentPost(); if (!p) return;
+  p.hidden = !p.hidden;
+  saveState();
+  renderHideBtn();
+  renderProfile();
+  renderGrid();
+});
+
+document.getElementById('toggleHiddenBtn').addEventListener('click', () => {
+  showHidden = !showHidden;
+  renderGrid();
+});
+
 document.getElementById('doneBtn').addEventListener('click', closeModal);
 
 /* ================================================================
@@ -1959,8 +2036,14 @@ function addNewPost() {
   openModal(post.id);
 }
 
-// Stub — implemented in Task 12 (hidden posts view).
-function openHiddenView() { /* implemented in Task 12 */ }
+// Reveal hidden posts in the main grid. Triggered from the action sheet.
+function openHiddenView() {
+  showHidden = true;
+  renderGrid();
+  if (hiddenCount() === 0) {
+    toast('No hidden posts.');
+  }
+}
 
 /* ================================================================
    ACTION SHEET (profile ⋯ menu)
