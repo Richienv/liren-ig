@@ -106,35 +106,16 @@
     height: 168px;
     border-radius: 50%;
     margin: 0 auto;
-    background: radial-gradient(circle at 30% 25%, #f5f5f5 0%, #d9d9dc 30%, #8b9cb5 55%, #4a5a7a 80%, #1f2736 100%);
+    background: #000;
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.3);
     cursor: pointer;
     transition: transform 0.2s;
   }
   .avatar:hover { transform: scale(1.02); }
-  .avatar::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: conic-gradient(from 210deg, #d0d4de, #8fa5c7, #e8d8c8, #7a8ba5, #d0d4de);
-    mix-blend-mode: overlay;
-    opacity: 0.7;
-    pointer-events: none;
-  }
-  .avatar .mark {
-    position: relative;
-    color: rgba(255,255,255,0.95);
-    font-family: 'Instrument Serif', serif;
-    font-size: 64px;
-    line-height: 1;
-    z-index: 2;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
-  }
   .avatar img {
     position: absolute;
     inset: 0;
@@ -718,13 +699,6 @@
     position: relative;
   }
   .me-user .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .me-user .mini-avatar .mark {
-    position: absolute; inset: 0;
-    display: grid; place-items: center;
-    font-family: 'Instrument Serif', serif;
-    font-size: 16px; color: #fff;
-    background: radial-gradient(circle at 30% 25%, #d9d9dc, #4a5a7a);
-  }
   .me-user .un { font-size: 13px; font-weight: 600; }
   .me-user .sub { font-size: 11px; color: var(--ig-muted); }
 
@@ -935,7 +909,6 @@
   @media (max-width: 720px) {
     .profile { grid-template-columns: 1fr; gap: 20px; text-align: center; }
     .avatar { width: 120px; height: 120px; }
-    .avatar .mark { font-size: 44px; }
     .profile-stats { justify-content: center; gap: 24px; font-size: 14px; }
     .tile .content { padding: 18px 16px; }
     .size-xl { font-size: 22px; } .size-lg { font-size: 19px; } .size-md { font-size: 15px; } .size-num { font-size: 44px; }
@@ -968,12 +941,7 @@
 
   <!-- PROFILE HEADER -->
   <section class="profile">
-    <div class="avatar" id="avatar" title="Click to change profile picture">
-      <span class="mark" id="avatarMark">L</span>
-      <div class="avatar-edit">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      </div>
-    </div>
+    <div class="avatar" id="avatar" title="Click to change profile picture"></div>
     <div class="profile-body">
       <div class="profile-top">
         <input class="username" id="username" value="liren.labs" spellcheck="false" />
@@ -1062,7 +1030,7 @@ Jakarta · Hangzhou · Bahasa-first.
         <button class="me-close" id="modalClose">✕</button>
       </div>
       <div class="me-user">
-        <div class="mini-avatar" id="miniAvatar"><div class="mark">L</div></div>
+        <div class="mini-avatar" id="miniAvatar"></div>
         <div>
           <div class="un" id="miniUsername">liren.labs</div>
           <div class="sub">Post preview · swipe/arrow to view slides</div>
@@ -1140,6 +1108,28 @@ Jakarta · Hangzhou · Bahasa-first.
    STATE
 ================================================================ */
 const STORAGE_KEY = 'liren.grid.planner.v2';
+
+// Inline SVG default avatar — blue metallic "L" mark on a soft bg.
+const DEFAULT_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#eef1f7"/>
+    </radialGradient>
+    <linearGradient id="metallic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6ea8ff"/>
+      <stop offset="35%" stop-color="#1b44ff"/>
+      <stop offset="70%" stop-color="#0b2bb8"/>
+      <stop offset="100%" stop-color="#4b7dff"/>
+    </linearGradient>
+    <filter id="shine"><feGaussianBlur stdDeviation="0.6"/></filter>
+  </defs>
+  <circle cx="100" cy="100" r="94" fill="url(#bgGrad)" stroke="url(#metallic)" stroke-width="6"/>
+  <path d="M70 60 L70 140 L130 140" fill="none" stroke="url(#metallic)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#shine)"/>
+  <path d="M112 122 L130 122 L130 140" fill="none" stroke="url(#metallic)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#shine)"/>
+</svg>
+`);
 
 function uid() { return 'p' + Math.random().toString(36).slice(2, 9); }
 
@@ -1316,30 +1306,31 @@ function renderProfile() {
   document.getElementById('username').value = state.profile.username;
   document.getElementById('profileName').value = state.profile.name;
   document.getElementById('profileBio').value = state.profile.bio;
+
+  // Main avatar — always render an <img>, defaulting to the inline Liren logo.
   const avatar = document.getElementById('avatar');
-  const mark = document.getElementById('avatarMark');
-  const existing = avatar.querySelector('img');
-  if (existing) existing.remove();
-  if (state.profile.avatar) {
-    const img = document.createElement('img');
-    img.src = state.profile.avatar;
-    avatar.appendChild(img);
-    mark.style.display = 'none';
-  } else {
-    mark.style.display = '';
-    mark.textContent = (state.profile.username[0] || 'L').toUpperCase();
-  }
-  // mini avatar
+  avatar.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = state.profile.avatar || DEFAULT_AVATAR;
+  img.alt = state.profile.username;
+  avatar.appendChild(img);
+  const editBadge = document.createElement('div');
+  editBadge.className = 'avatar-edit';
+  editBadge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+  avatar.appendChild(editBadge);
+
+  // Mini avatar inside modal — same logic.
   const mini = document.getElementById('miniAvatar');
   mini.innerHTML = '';
-  if (state.profile.avatar) {
-    const img = document.createElement('img'); img.src = state.profile.avatar; mini.appendChild(img);
-  } else {
-    const m = document.createElement('div'); m.className = 'mark'; m.textContent = (state.profile.username[0] || 'L').toUpperCase(); mini.appendChild(m);
-  }
+  const miniImg = document.createElement('img');
+  miniImg.src = state.profile.avatar || DEFAULT_AVATAR;
+  miniImg.alt = state.profile.username;
+  mini.appendChild(miniImg);
+
   document.getElementById('miniUsername').textContent = state.profile.username;
   document.getElementById('statPosts').textContent = state.posts.length;
-  document.getElementById('metaCount').textContent = `${state.posts.length} POSTS · PLAN MODE`;
+  const metaCount = document.getElementById('metaCount');
+  if (metaCount) metaCount.textContent = `${state.posts.length} POSTS · PLAN MODE`;
 }
 
 function cornerIconSvg(type) {
