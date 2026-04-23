@@ -335,8 +335,7 @@
     user-select: none;
     transition: opacity 0.15s;
   }
-  .tile[draggable="true"] { cursor: grab; }
-  .tile.dragging { opacity: 0.35; cursor: grabbing; }
+  .tile.dragging { opacity: 0.25; }
   .tile.drop-target::after {
     content: '';
     position: absolute;
@@ -344,6 +343,14 @@
     border: 3px solid var(--ig-blue);
     z-index: 10;
     pointer-events: none;
+  }
+  .drag-ghost {
+    position: fixed !important;
+    z-index: 200;
+    pointer-events: none;
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    opacity: 0.92;
   }
 
   .tile .photo {
@@ -1373,9 +1380,9 @@ function renderGrid() {
     const bgClass = slideBgClass(firstSlide);
     const tile = document.createElement('div');
     tile.className = `tile ${bgClass}`;
-    tile.setAttribute('draggable', 'true');
     tile.dataset.postId = post.id;
     tile.dataset.index = idx;
+    tile.style.touchAction = 'pan-y';
 
     tile.innerHTML = `
       ${post.pillar ? `<span class="pillar">${escapeHtml(post.pillar)} · ${escapeHtml(post.type)}</span>` : ''}
@@ -1390,16 +1397,16 @@ function renderGrid() {
     `;
 
     tile.addEventListener('click', (e) => {
+      if (dragHappened) { dragHappened = false; return; }
       if (e.target.closest('.tile-drag')) return;
       openModal(post.id);
     });
 
-    // drag-reorder
-    tile.addEventListener('dragstart', onDragStart);
-    tile.addEventListener('dragend', onDragEnd);
-    tile.addEventListener('dragover', onDragOver);
-    tile.addEventListener('dragleave', onDragLeave);
-    tile.addEventListener('drop', onDrop);
+    // Long-press drag-reorder (replaces HTML5 drag-and-drop)
+    tile.addEventListener('pointerdown', onTilePointerDown);
+    tile.addEventListener('pointermove', onTilePointerMove);
+    tile.addEventListener('pointerup', onTilePointerUp);
+    tile.addEventListener('pointercancel', onTilePointerUp);
 
     grid.appendChild(tile);
   });
@@ -1413,42 +1420,118 @@ function renderGrid() {
 }
 
 /* ================================================================
-   DRAG & DROP REORDER
+   LONG-PRESS DRAG-REORDER (pointer-based, works on touch + mouse)
 ================================================================ */
-let dragSrcId = null;
+const LONGPRESS_MS = 380;
+const MOVE_CANCEL_PX = 6;
+let lpTimer = null;
+let lpStart = null;
+let dragTile = null;
+let dragPostId = null;
+let dragGhost = null;
+let dragHappened = false;
 
-function onDragStart(e) {
-  dragSrcId = e.currentTarget.dataset.postId;
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-  try { e.dataTransfer.setData('text/plain', dragSrcId); } catch {}
-}
-function onDragEnd(e) {
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
-  dragSrcId = null;
-}
-function onDragOver(e) {
-  if (!dragSrcId) return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
+function onTilePointerDown(e) {
   const tile = e.currentTarget;
-  if (tile.dataset.postId !== dragSrcId) tile.classList.add('drop-target');
+  if (!tile.dataset.postId) return;
+  // Only primary button for mouse (ignore right-click etc.)
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  // Reset drag-consumed flag at the start of a fresh gesture.
+  dragHappened = false;
+  lpStart = { x: e.clientX, y: e.clientY, tile, pointerId: e.pointerId };
+  clearTimeout(lpTimer);
+  lpTimer = setTimeout(() => {
+    if (lpStart) startDrag(lpStart, tile);
+  }, LONGPRESS_MS);
 }
-function onDragLeave(e) { e.currentTarget.classList.remove('drop-target'); }
-function onDrop(e) {
-  e.preventDefault();
-  const tile = e.currentTarget;
-  tile.classList.remove('drop-target');
-  const targetId = tile.dataset.postId;
-  if (!dragSrcId || !targetId || dragSrcId === targetId) return;
-  const fromIdx = state.posts.findIndex(p => p.id === dragSrcId);
-  const toIdx   = state.posts.findIndex(p => p.id === targetId);
-  if (fromIdx < 0 || toIdx < 0) return;
-  const [moved] = state.posts.splice(fromIdx, 1);
-  state.posts.splice(toIdx, 0, moved);
-  saveState();
-  renderGrid();
+
+function onTilePointerMove(e) {
+  if (!lpStart || dragTile) return;
+  const dx = Math.abs(e.clientX - lpStart.x);
+  const dy = Math.abs(e.clientY - lpStart.y);
+  if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX) {
+    // User is scrolling — cancel the long-press timer so drag doesn't activate.
+    clearTimeout(lpTimer);
+    lpTimer = null;
+    lpStart = null;
+  }
+}
+
+function onTilePointerUp() {
+  clearTimeout(lpTimer);
+  lpTimer = null;
+  lpStart = null;
+  if (dragTile) endDrag();
+}
+
+function startDrag(start, tile) {
+  dragTile = tile;
+  dragPostId = tile.dataset.postId;
+  dragHappened = true;
+  tile.classList.add('dragging');
+  navigator.vibrate?.(10);
+
+  const rect = tile.getBoundingClientRect();
+  dragGhost = tile.cloneNode(true);
+  dragGhost.classList.add('drag-ghost');
+  dragGhost.style.width = rect.width + 'px';
+  dragGhost.style.height = rect.height + 'px';
+  dragGhost.style.left = rect.left + 'px';
+  dragGhost.style.top = rect.top + 'px';
+  dragGhost.style.pointerEvents = 'none';
+  document.body.appendChild(dragGhost);
+
+  document.addEventListener('pointermove', onDragMove);
+  document.addEventListener('pointerup', onDragEndDoc);
+  document.addEventListener('pointercancel', onDragEndDoc);
+}
+
+function onDragMove(e) {
+  if (!dragGhost || !dragTile) return;
+  const rect = dragTile.getBoundingClientRect();
+  dragGhost.style.left = (e.clientX - rect.width / 2) + 'px';
+  dragGhost.style.top = (e.clientY - rect.height / 2) + 'px';
+
+  // Ghost must not intercept hit-testing
+  const prevPE = dragGhost.style.pointerEvents;
+  dragGhost.style.pointerEvents = 'none';
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  dragGhost.style.pointerEvents = prevPE;
+
+  const target = el?.closest?.('.tile');
+  document.querySelectorAll('.drop-target').forEach(t => t.classList.remove('drop-target'));
+  if (target && target !== dragTile && target.dataset.postId) {
+    target.classList.add('drop-target');
+  }
+}
+
+function onDragEndDoc() {
+  document.removeEventListener('pointermove', onDragMove);
+  document.removeEventListener('pointerup', onDragEndDoc);
+  document.removeEventListener('pointercancel', onDragEndDoc);
+  const target = document.querySelector('.drop-target');
+  if (target && target.dataset.postId && target.dataset.postId !== dragPostId) {
+    const fromIdx = state.posts.findIndex(p => p.id === dragPostId);
+    const toIdx = state.posts.findIndex(p => p.id === target.dataset.postId);
+    if (fromIdx >= 0 && toIdx >= 0) {
+      const [moved] = state.posts.splice(fromIdx, 1);
+      state.posts.splice(toIdx, 0, moved);
+      saveState();
+      renderGrid();
+    }
+  }
+  endDrag();
+}
+
+function endDrag() {
+  if (dragTile) dragTile.classList.remove('dragging');
+  if (dragGhost) dragGhost.remove();
+  document.querySelectorAll('.drop-target').forEach(t => t.classList.remove('drop-target'));
+  dragTile = null;
+  dragPostId = null;
+  dragGhost = null;
+  // dragHappened stays true until the next tile click (which consumes + resets it)
+  // or until the next pointerdown starts a fresh gesture.
 }
 
 /* ================================================================
