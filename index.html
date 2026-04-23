@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liren Labs · Instagram Grid Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ============ ROOT ============ */
+  :root {
+    --ig-bg: #000000;
+    --ig-fg: #ffffff;
+    --ig-muted: #a8a8a8;
+    --ig-border: #262626;
+    --ig-blue: #0095f6;
+    --ig-blue-hover: #1877f2;
+    --ig-panel: #121212;
+    --ig-panel-2: #1a1a1a;
+    --ig-verified: #3897f0;
+    --ig-red: #ed4956;
+
+    --canvas: #FAF9F5;
+    --ink: #141413;
+    --muted-liren: #6B6B66;
+    --hairline: #E5E3DC;
+    --liren-blue: #0047FF;
+    --peter-brown: #3a302c;
+    --peter-cream: #F2EFE8;
+  }
+
+  html, body {
+    background: var(--ig-bg);
+    color: var(--ig-fg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; }
+
+  /* ============ TOP NAV ============ */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--ig-border);
+  }
+  .topnav-inner {
+    max-width: 975px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+  }
+  .topnav-brand {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+  .topnav-brand .zh { font-family: 'Noto Serif SC', serif; font-size: 18px; opacity: 0.55; margin-left: 6px; }
+  .topnav-actions { display: flex; gap: 8px; align-items: center; }
+  .tnbtn {
+    background: var(--ig-panel-2);
+    color: #fff;
+    border: 1px solid var(--ig-border);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tnbtn:hover { background: #262626; }
+  .tnbtn.danger:hover { background: #3a1a1d; border-color: #6b2530; color: #ff6b75; }
+  .tnbtn.primary { background: var(--ig-blue); border-color: var(--ig-blue); }
+  .tnbtn.primary:hover { background: var(--ig-blue-hover); }
+
+  /* ============ PAGE SHELL ============ */
+  .wrap {
+    max-width: 975px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+  }
+
+  /* ============ PROFILE HEADER ============ */
+  .profile {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    gap: 48px;
+    padding: 16px 0 28px;
+    border-bottom: 1px solid var(--ig-border);
+  }
+
+  .avatar {
+    width: 168px;
+    height: 168px;
+    border-radius: 50%;
+    margin: 0 auto;
+    background: radial-gradient(circle at 30% 25%, #f5f5f5 0%, #d9d9dc 30%, #8b9cb5 55%, #4a5a7a 80%, #1f2736 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .avatar:hover { transform: scale(1.02); }
+  .avatar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 210deg, #d0d4de, #8fa5c7, #e8d8c8, #7a8ba5, #d0d4de);
+    mix-blend-mode: overlay;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .avatar .mark {
+    position: relative;
+    color: rgba(255,255,255,0.95);
+    font-family: 'Instrument Serif', serif;
+    font-size: 64px;
+    line-height: 1;
+    z-index: 2;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  }
+  .avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 3;
+  }
+  .avatar-edit {
+    position: absolute;
+    bottom: 4px; right: 4px;
+    width: 36px; height: 36px;
+    background: var(--ig-blue);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    z-index: 5;
+    border: 3px solid #000;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+  .avatar:hover .avatar-edit { opacity: 1; }
+  .avatar-edit svg { width: 16px; height: 16px; }
+
+  .profile-body { padding-top: 6px; }
+
+  .profile-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .username {
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 6px;
+    min-width: 120px;
+  }
+  .username:focus { outline: none; background: #1a1a1a; border-color: #333; }
+
+  .verified {
+    display: inline-block;
+    width: 18px; height: 18px;
+    background: var(--ig-verified);
+    clip-path: polygon(50% 0, 61% 10%, 75% 7%, 82% 20%, 95% 24%, 93% 39%, 100% 50%, 93% 61%, 95% 76%, 82% 80%, 75% 93%, 61% 90%, 50% 100%, 39% 90%, 25% 93%, 18% 80%, 5% 76%, 7% 61%, 0 50%, 7% 39%, 5% 24%, 18% 20%, 25% 7%, 39% 10%);
+  }
+  .dots { color: var(--ig-fg); font-size: 20px; letter-spacing: 2px; margin-left: 6px; }
+
+  .profile-stats {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 20px;
+    font-size: 16px;
+  }
+  .profile-stats span b { font-weight: 600; }
+  .profile-stats span { color: var(--ig-fg); }
+
+  .profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 6px;
+    min-width: 200px;
+    font-family: inherit;
+  }
+  .profile-name:focus { outline: none; background: #1a1a1a; border-color: #333; }
+
+  .profile-bio {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ig-fg);
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 4px 6px;
+    border-radius: 6px;
+    resize: none;
+    width: 100%;
+    min-height: 60px;
+    font-family: inherit;
+  }
+  .profile-bio:focus { outline: none; background: #1a1a1a; border-color: #333; }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--ig-blue); color: #fff; }
+  .btn-ghost { background: #1a1a1a; color: #fff; }
+  .btn-icon { background: #1a1a1a; color: #fff; width: 32px; padding: 0; display: grid; place-items: center; font-size: 16px; }
+
+  /* ============ HIGHLIGHTS ============ */
+  .highlights {
+    display: flex;
+    gap: 24px;
+    padding: 32px 0 24px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--ig-border);
+  }
+  .highlights::-webkit-scrollbar { display: none; }
+  .highlight {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 84px;
+  }
+  .highlight .circle {
+    width: 77px; height: 77px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    display: grid;
+    place-items: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    color: var(--canvas);
+  }
+  .highlight .circle.zh { font-family: 'Noto Serif SC', serif; font-size: 26px; }
+  .highlight .circle.chrome { background: linear-gradient(140deg, #d0d4de 0%, #8fa5c7 50%, #e8dfd2 100%); }
+  .highlight .label {
+    font-size: 12px;
+    color: var(--ig-fg);
+    font-weight: 400;
+  }
+
+  /* ============ TABS ============ */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    border-bottom: 1px solid var(--ig-border);
+    margin-bottom: 3px;
+  }
+  .tab {
+    padding: 14px 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--ig-muted);
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid transparent;
+    margin-top: -1px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tab.active { color: var(--ig-fg); border-top-color: var(--ig-fg); }
+  .tab svg { width: 12px; height: 12px; }
+
+  /* ============ GRID ============ */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    margin-top: 3px;
+  }
+
+  .tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.15s;
+  }
+  .tile[draggable="true"] { cursor: grab; }
+  .tile.dragging { opacity: 0.35; cursor: grabbing; }
+  .tile.drop-target::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 3px solid var(--ig-blue);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .tile .photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  .tile .corner-icon {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 3;
+    color: #fff;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  }
+  .tile .corner-icon svg { width: 22px; height: 22px; fill: currentColor; }
+
+  .tile .lw {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: rgba(20,20,19,0.35);
+    z-index: 3;
+  }
+  .tile.dark .lw { color: rgba(250,249,245,0.45); }
+  .tile.has-photo .lw { color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+
+  .tile .pillar {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 3px 7px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border-radius: 3px;
+    text-transform: uppercase;
+    z-index: 3;
+  }
+
+  /* Hover overlay on tiles */
+  .tile-hover {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 4;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .tile:hover .tile-hover { opacity: 1; }
+  .tile-hover .stat { display: inline-flex; align-items: center; gap: 6px; }
+  .tile-hover svg { width: 18px; height: 18px; fill: #fff; }
+
+  /* Drag handle */
+  .tile-drag {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    width: 28px; height: 22px;
+    border-radius: 4px;
+    display: none;
+    place-items: center;
+    z-index: 5;
+    cursor: grab;
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .tile:hover .tile-drag { display: grid; }
+  .tile-drag:active { cursor: grabbing; }
+
+  /* Base tile content container */
+  .tile .content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 28px 26px;
+    z-index: 2;
+  }
+
+  .tile .serif {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+  }
+  .tile .sans { font-family: 'Inter', sans-serif; font-weight: 500; line-height: 1.3; }
+  .tile .mono { font-family: 'JetBrains Mono', monospace; }
+  .tile .zh { font-family: 'Noto Serif SC', serif; }
+
+  .bg-canvas {
+    background-color: var(--canvas);
+    background-image:
+      linear-gradient(rgba(20,20,19,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,20,19,0.04) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink);
+  }
+  .bg-canvas-plain { background: var(--canvas); color: var(--ink); }
+  .bg-ink { background: var(--ink); color: var(--canvas); }
+  .bg-brown { background: var(--peter-brown); color: var(--peter-cream); }
+  .bg-cream {
+    background: var(--peter-cream);
+    color: var(--ink);
+    background-image:
+      linear-gradient(rgba(20,20,19,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,20,19,0.04) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .bg-chrome {
+    background:
+      radial-gradient(ellipse at 30% 20%, #eef0f5 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, #c7d1e0 0%, transparent 50%),
+      linear-gradient(135deg, #dbe0ea 0%, #a8b4c8 50%, #e8dfd2 100%);
+    color: var(--ink);
+  }
+  .bg-slate { background: linear-gradient(155deg, #1a1d24 0%, #2b2f3a 50%, #4a5568 100%); color: #fff; }
+  .bg-ink-split { background: var(--ink); color: var(--canvas); }
+
+  .chrome-pin {
+    width: 48%;
+    aspect-ratio: 0.75;
+    margin: 0 auto;
+    border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+    background: radial-gradient(ellipse at 35% 25%, #ffffff 0%, #e4eaf5 20%, #8fa5c7 55%, #4a5a7a 100%);
+    position: relative;
+    box-shadow:
+      inset -6px -6px 18px rgba(20,30,60,0.4),
+      inset 6px 6px 18px rgba(255,255,255,0.5),
+      0 8px 24px rgba(0,0,0,0.15);
+    transform: rotate(-8deg);
+  }
+  .chrome-pin::after {
+    content: '';
+    position: absolute;
+    top: 12%; left: 30%;
+    width: 24%; height: 30%;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.55);
+    filter: blur(4px);
+  }
+
+  .mt-2 { margin-top: 8px; } .mt-3 { margin-top: 12px; } .mt-4 { margin-top: 18px; } .mb-3 { margin-bottom: 12px; }
+  .size-xl { font-size: 32px; } .size-lg { font-size: 26px; } .size-md { font-size: 20px; }
+  .size-sm { font-size: 14px; } .size-xs { font-size: 12px; }
+  .size-num { font-size: 58px; font-family: 'Instrument Serif', serif; line-height: 1; }
+  .muted { opacity: 0.6; } .italic { font-style: italic; }
+  .stack > * + * { margin-top: 10px; }
+
+  .split { display: grid; grid-template-rows: 1fr 1fr; height: 100%; gap: 0; }
+  .split > div { display: flex; align-items: center; justify-content: center; padding: 24px; }
+
+  /* ============ ADD-TILE (+ card) ============ */
+  .tile.add-tile {
+    background: #0b0b0b;
+    border: 1px dashed #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    color: #666;
+    transition: all 0.2s;
+  }
+  .tile.add-tile:hover { border-color: var(--ig-blue); color: var(--ig-blue); background: #0b1420; }
+  .tile.add-tile .plus { font-size: 42px; font-weight: 200; line-height: 1; }
+  .tile.add-tile .lbl { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+
+  /* ============ LEGEND ============ */
+  .legend {
+    margin-top: 40px;
+    padding: 24px;
+    background: #0b0b0b;
+    border: 1px solid var(--ig-border);
+    border-radius: 10px;
+  }
+  .legend h3 {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ig-muted);
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 32px;
+    font-size: 13px;
+    color: #d4d4d4;
+  }
+  .legend-grid .key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    background: #1c1c1c;
+    padding: 3px 7px;
+    border-radius: 3px;
+    margin-right: 10px;
+    color: #fff;
+  }
+  .legend small { color: var(--ig-muted); font-size: 11px; display: block; margin-top: 2px; }
+
+  /* ============ PAGE META ============ */
+  .page-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 24px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .page-meta h1 { font-family: 'Instrument Serif', serif; font-size: 28px; font-weight: 400; color: #fff; }
+  .page-meta .caption { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ig-muted); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ============ MODAL ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: #000;
+    border-radius: 12px;
+    max-width: 1200px;
+    width: 100%;
+    max-height: 92vh;
+    display: grid;
+    grid-template-columns: minmax(400px, 1fr) 420px;
+    overflow: hidden;
+    animation: modalIn 0.18s ease-out;
+  }
+  @keyframes modalIn {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* Post preview side */
+  .mp {
+    background: #000;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+  }
+  .mp-canvas {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    background: #0a0a0a;
+    overflow: hidden;
+  }
+  .mp-canvas .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .mp-canvas .slide.active { opacity: 1; }
+  .mp-canvas .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* Reuse tile rendering inside slide */
+  .slide > .tile-render {
+    position: absolute;
+    inset: 0;
+  }
+
+  .mp-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.9);
+    color: #000;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 4;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .mp-nav.prev { left: 10px; }
+  .mp-nav.next { right: 10px; }
+  .mp-nav:disabled { opacity: 0; pointer-events: none; }
+
+  .mp-dots {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    z-index: 4;
+  }
+  .mp-dots span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.55);
+    transition: background 0.15s;
+  }
+  .mp-dots span.active { background: #0095f6; }
+
+  .mp-count {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 999px;
+    z-index: 4;
+  }
+
+  /* Editor side */
+  .me {
+    background: #0a0a0a;
+    border-left: 1px solid var(--ig-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .me-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--ig-border);
+    flex-shrink: 0;
+  }
+  .me-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .me-close {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+  }
+  .me-close:hover { color: var(--ig-muted); }
+
+  .me-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--ig-border);
+    flex-shrink: 0;
+  }
+  .me-user .mini-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--ink);
+    overflow: hidden;
+    position: relative;
+  }
+  .me-user .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .me-user .mini-avatar .mark {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 16px; color: #fff;
+    background: radial-gradient(circle at 30% 25%, #d9d9dc, #4a5a7a);
+  }
+  .me-user .un { font-size: 13px; font-weight: 600; }
+  .me-user .sub { font-size: 11px; color: var(--ig-muted); }
+
+  .me-body {
+    padding: 14px 18px 18px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .me-body::-webkit-scrollbar { width: 8px; }
+  .me-body::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ig-muted);
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .field input[type="text"],
+  .field textarea,
+  .field select {
+    width: 100%;
+    background: #111;
+    border: 1px solid #222;
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .field input[type="text"]:focus,
+  .field textarea:focus,
+  .field select:focus {
+    outline: none;
+    border-color: var(--ig-blue);
+  }
+  .field textarea { min-height: 80px; line-height: 1.45; }
+
+  .type-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .type-row .tb {
+    background: #111;
+    border: 1px solid #222;
+    color: #ccc;
+    padding: 9px 4px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .type-row .tb svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .type-row .tb.active { background: #1b2430; color: #fff; border-color: var(--ig-blue); }
+  .type-row .tb:hover { background: #161616; }
+
+  /* Slides editor */
+  .slides-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .slide-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #111;
+    border: 1px solid #222;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .slide-item .thumb {
+    width: 48px; height: 48px;
+    border-radius: 5px;
+    background: #000;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .slide-item .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .slide-item .thumb.design {
+    background: linear-gradient(135deg, #222, #333);
+    display: grid;
+    place-items: center;
+    font-family: 'Instrument Serif', serif;
+    color: #fff;
+    font-size: 16px;
+  }
+  .slide-item .meta { flex: 1; min-width: 0; font-size: 11px; color: var(--ig-muted); }
+  .slide-item .meta b { color: #fff; font-size: 12px; font-weight: 600; display: block; }
+  .slide-item .actions { display: flex; gap: 4px; }
+  .slide-item .actions button {
+    width: 28px; height: 28px;
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: #999;
+    border-radius: 5px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+  }
+  .slide-item .actions button:hover { background: #222; color: #fff; }
+  .slide-item .actions button.rm:hover { background: #3a1a1d; border-color: #6b2530; color: #ff6b75; }
+
+  .slide-add {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .slide-add button {
+    flex: 1;
+    background: #111;
+    border: 1px dashed #333;
+    color: #ccc;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .slide-add button:hover { border-color: var(--ig-blue); color: var(--ig-blue); }
+  .slide-add svg { width: 14px; height: 14px; }
+
+  .me-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--ig-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .me-footer .del {
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: var(--ig-red);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .me-footer .del:hover { background: #3a1a1d; border-color: #6b2530; }
+  .me-footer .done {
+    background: var(--ig-blue);
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .me-footer .done:hover { background: var(--ig-blue-hover); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.2s;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Post caption in modal */
+  .mp-caption {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    .modal {
+      grid-template-columns: 1fr;
+      max-height: 96vh;
+      overflow-y: auto;
+    }
+    .mp { min-height: 0; }
+    .me { border-left: none; border-top: 1px solid var(--ig-border); }
+  }
+
+  @media (max-width: 720px) {
+    .profile { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+    .avatar { width: 120px; height: 120px; }
+    .avatar .mark { font-size: 44px; }
+    .profile-stats { justify-content: center; gap: 24px; font-size: 14px; }
+    .tile .content { padding: 18px 16px; }
+    .size-xl { font-size: 22px; } .size-lg { font-size: 19px; } .size-md { font-size: 15px; } .size-num { font-size: 44px; }
+    .modal-backdrop { padding: 0; }
+    .modal { border-radius: 0; max-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="topnav-brand">Grid Planner <span class="zh">立人</span></div>
+    <div class="topnav-actions">
+      <button class="tnbtn" id="exportBtn" title="Download state as JSON">Export</button>
+      <button class="tnbtn" id="importBtn" title="Import state JSON">Import</button>
+      <button class="tnbtn danger" id="resetBtn" title="Reset to default mockup">Reset</button>
+      <button class="tnbtn primary" id="addPostBtn">+ New Post</button>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="page-meta">
+    <h1>Liren Labs — Grid Planner <span style="opacity:0.4; font-size:20px;">v1</span></h1>
+    <div class="caption" id="metaCount">LOADING…</div>
+  </div>
+
+  <!-- PROFILE HEADER -->
+  <section class="profile">
+    <div class="avatar" id="avatar" title="Click to change profile picture">
+      <span class="mark" id="avatarMark">L</span>
+      <div class="avatar-edit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+    </div>
+    <div class="profile-body">
+      <div class="profile-top">
+        <input class="username" id="username" value="liren.labs" spellcheck="false" />
+        <span class="verified" title="verified"></span>
+        <button class="btn btn-primary">Following</button>
+        <button class="btn btn-ghost">Message</button>
+        <button class="btn btn-icon">+</button>
+        <span class="dots">⋯</span>
+      </div>
+
+      <div class="profile-stats">
+        <span><b id="statPosts">12</b> posts</span>
+        <span><b>247</b> followers</span>
+        <span><b>18</b> following</span>
+      </div>
+
+      <input class="profile-name" id="profileName" value="Liren Labs · 立人" spellcheck="false" />
+      <textarea class="profile-bio" id="profileBio" spellcheck="false">AI agents yang bantu kamu berdiri lebih tinggi.
+Jakarta · Hangzhou · Bahasa-first.
+🔗 lirenlabs.ai</textarea>
+    </div>
+  </section>
+
+  <!-- HIGHLIGHTS -->
+  <section class="highlights">
+    <div class="highlight"><div class="circle chrome">L</div><div class="label">About</div></div>
+    <div class="highlight"><div class="circle zh">立</div><div class="label">立人</div></div>
+    <div class="highlight"><div class="circle">01</div><div class="label">Meeting</div></div>
+    <div class="highlight"><div class="circle">02</div><div class="label">Lamaran</div></div>
+    <div class="highlight"><div class="circle">03</div><div class="label">LinkedIn</div></div>
+    <div class="highlight"><div class="circle">note</div><div class="label">Founder</div></div>
+  </section>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      POSTS
+    </div>
+    <div class="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><polygon points="10,8 10,16 16,12" fill="currentColor"/></svg>
+      REELS
+    </div>
+    <div class="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+      TAGGED
+    </div>
+  </div>
+
+  <!-- GRID (rendered dynamically) -->
+  <div class="grid" id="grid"></div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <h3>Pillar Legend · Proposed Mix (Month 1)</h3>
+    <div class="legend-grid">
+      <div><span class="key">HOT-TAKE</span> 35% · meta-content, contrarian opinions
+        <small>lo/gue register OK. Thumb-stop hooks on Canvas or Ink.</small></div>
+      <div><span class="key">TEARDOWN</span> 20% · why other IDN creators went viral
+        <small>Vina Muliana, Raditya Dika, Timothy Ronald, Gita Savitri as raw material.</small></div>
+      <div><span class="key">EDUCATION</span> 20% · lists, frameworks, agent ≠ chatbot
+        <small>Shift from "how agents work" to "how AI changes your week."</small></div>
+      <div><span class="key">TOOL-DROP</span> 10% · agents mentioned as utilities
+        <small>Product appears at slide 4 of 6, never centered. kamu register.</small></div>
+      <div><span class="key">PHILOSOPHY</span> 10% · 立人, Confucius, slow posts
+        <small>kamu only. Chrome pin + Noto Serif SC. Scarce by design.</small></div>
+      <div><span class="key">FOUNDER</span> 5% · Richie from Hangzhou / Jakarta
+        <small>Real and scarce. Conversion asks land here first.</small></div>
+    </div>
+    <div style="margin-top:20px; padding-top:16px; border-top:1px solid #1a1a1a; font-size:12px; color:var(--ig-muted); line-height:1.55;">
+      <b style="color:#fff; font-weight:500;">Voice rule:</b> lo/gue allowed on hot-takes, teardowns, and trend riffs.
+      Hard switch back to <i>kamu</i> the moment copy touches product, positioning, or 立人 philosophy.
+      The grid signals the register through format — brown/cream warm cards = lo/gue, chrome stills + kamu posts = formal mode.
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal">
+    <div class="mp" id="modalPreview"></div>
+    <div class="me">
+      <div class="me-header">
+        <div class="me-title">Edit Post</div>
+        <button class="me-close" id="modalClose">✕</button>
+      </div>
+      <div class="me-user">
+        <div class="mini-avatar" id="miniAvatar"><div class="mark">L</div></div>
+        <div>
+          <div class="un" id="miniUsername">liren.labs</div>
+          <div class="sub">Post preview · swipe/arrow to view slides</div>
+        </div>
+      </div>
+      <div class="me-body">
+        <div class="field">
+          <label>Post Type</label>
+          <div class="type-row">
+            <button class="tb" data-type="still">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              Still
+            </button>
+            <button class="tb" data-type="carousel">
+              <svg viewBox="0 0 24 24"><rect x="6" y="6" width="14" height="14" rx="2"/><rect x="3" y="3" width="14" height="14" rx="2"/></svg>
+              Carousel
+            </button>
+            <button class="tb" data-type="reel">
+              <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><polygon points="10,8 10,16 16,12" fill="currentColor" stroke="none"/></svg>
+              Reel
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Pillar Tag</label>
+          <select id="pillarSelect">
+            <option>HOT-TAKE</option>
+            <option>TEARDOWN</option>
+            <option>EDUCATION</option>
+            <option>TOOL-DROP</option>
+            <option>PHILOSOPHY</option>
+            <option>FOUNDER</option>
+            <option>TREND-RIFF</option>
+            <option>APHORISM</option>
+            <option>LIST</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Slides / Photos</label>
+          <div class="slides-list" id="slidesList"></div>
+          <div class="slide-add">
+            <button id="addPhotoBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+              Upload Photo
+            </button>
+            <button id="addUrlBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>
+              From URL
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Caption (for post view)</label>
+          <textarea id="captionInput" placeholder="Write your caption… use @ for mentions, # for hashtags"></textarea>
+        </div>
+      </div>
+      <div class="me-footer">
+        <button class="del" id="deletePostBtn">Delete Post</button>
+        <button class="done" id="doneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="filePicker" accept="image/*" multiple style="display:none;" />
+<input type="file" id="avatarPicker" accept="image/*" style="display:none;" />
+<input type="file" id="jsonPicker" accept="application/json" style="display:none;" />
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   STATE
+================================================================ */
+const STORAGE_KEY = 'liren.grid.planner.v1';
+
+function uid() { return 'p' + Math.random().toString(36).slice(2, 9); }
+
+// The 12 design templates — each is a rendered "tile" with a background class + inner HTML.
+// These act as the DEFAULT first slide of each seed post. Users can overlay photos on top.
+const DESIGN_TEMPLATES = [
+  { bg: 'bg-ink dark', html: `<div class="content"><div class="serif size-xl stack"><div>6 meeting Senin.</div><div>Gue gak nyatet</div><div class="italic" style="opacity:0.85;">satu kata pun.</div></div></div>` },
+  { bg: 'bg-cream', html: `<div class="content"><div class="mono size-xs" style="opacity:0.55; margin-bottom:12px;">UNPOPULAR OPINION</div><div class="serif size-md" style="line-height:1.25;">Posting tiap hari<br>tanpa studi apa yang works<br>bukan konsistensi.</div><div class="serif italic size-md" style="opacity:0.7; margin-top:12px;">Itu cuma gagal on schedule.</div></div>` },
+  { bg: 'bg-canvas', html: `<div class="content"><div class="serif size-lg stack"><div>Lo bukan kena</div><div>shadowban.</div><div class="italic mt-2" style="opacity:0.75;">Lo cuma bikin content</div><div class="italic" style="opacity:0.75;">yang gak ada yang save.</div></div></div>` },
+  { bg: 'bg-brown dark', html: `<div class="content" style="justify-content:space-between;"><div><div class="size-num">30</div><div class="serif size-md italic" style="margin-top:-4px;">cara buka</div><div class="serif size-md" style="margin-top:2px;">LinkedIn post</div><div class="serif size-md italic" style="margin-top:2px;">yang gak cringe.</div></div><div class="mono size-xs" style="opacity:0.55;">SWIPE · 30 HOOKS · FREE</div></div>` },
+  { bg: 'bg-ink-split dark', html: `<div class="split"><div style="background:#2a2a28;"><div class="stack"><div class="mono size-xs" style="opacity:0.5;">VINA MULIANA · REEL</div><div class="serif size-md">"Kenapa CV lo gak di-respon."</div><div class="mono size-xs" style="opacity:0.7; color:#8fd4a8;">▲ 2.4M views</div></div></div><div style="background:var(--canvas); color:var(--ink);"><div class="stack"><div class="mono size-xs" style="opacity:0.5;">WHY IT WORKS</div><div class="serif size-md">Hook pertama<br>adalah <i>pertanyaan lo sendiri.</i></div></div></div></div>` },
+  { bg: 'bg-canvas-plain', html: `<div class="content" style="padding:20px;"><div class="mono size-xs" style="opacity:0.55; margin-bottom:10px;">5 TOOLS · WEEK 16</div><div class="stack" style="font-size:13px;"><div style="display:flex; justify-content:space-between;"><span>01 · Claude</span><span class="mono size-xs muted">daily</span></div><div style="display:flex; justify-content:space-between;"><span>02 · Notion</span><span class="mono size-xs muted">daily</span></div><div style="display:flex; justify-content:space-between;"><span>03 · Higgsfield</span><span class="mono size-xs muted">weekly</span></div><div style="display:flex; justify-content:space-between; background:var(--ink); color:var(--canvas); padding:6px 8px; border-radius:4px;"><span>04 · <b>Agent Meeting</b></span><span class="mono size-xs" style="opacity:0.65;">6×/day</span></div><div style="display:flex; justify-content:space-between;"><span>05 · CapCut</span><span class="mono size-xs muted">weekly</span></div></div></div>` },
+  { bg: 'bg-chrome', html: `<div class="content" style="padding:36px 24px;"><div class="chrome-pin"></div><div style="text-align:center; margin-top:22px;"><div class="zh" style="font-size:36px; letter-spacing:0.06em; color:#1a1f2e;">己欲立而立人</div><div class="mono size-xs" style="margin-top:10px; opacity:0.55; color:#1a1f2e;">CONFUCIUS · 500 BCE</div></div></div>` },
+  { bg: 'bg-brown dark', html: `<div class="content"><div class="mono size-xs" style="opacity:0.55; margin-bottom:14px;">11 THINGS</div><div class="serif size-lg" style="line-height:1.2;">11 hal yang lo<br>kira AI udah bisa.</div><div class="serif size-lg italic" style="opacity:0.7; margin-top:8px;">(Ternyata belum.)</div></div>` },
+  { bg: 'bg-slate dark', html: `<div class="content"><div class="mono size-xs" style="opacity:0.6;">HANGZHOU · WEEK 1</div><div class="serif size-lg" style="margin-top:10px; line-height:1.22;">Note dari<br><span class="italic">kamar kos</span><br>di Hangzhou.</div><div class="sans size-xs" style="opacity:0.65; margin-top:14px; font-weight:400;">Richie · co-founder</div></div>` },
+  { bg: 'bg-canvas', html: `<div class="content" style="justify-content:center; text-align:center;"><div class="mono size-xs" style="opacity:0.55; margin-bottom:16px;">6 SLIDES</div><div class="serif" style="font-size:44px; line-height:0.95;">Agent<br><span style="font-style:italic; opacity:0.35;">≠</span><br>Chatbot.</div><div class="sans size-xs" style="margin-top:18px; opacity:0.6;">Swipe untuk tahu bedanya →</div></div>` },
+  { bg: 'bg-cream', html: `<div class="content"><div class="mono size-xs" style="opacity:0.55; margin-bottom:8px;">2 JAM NONTON TIMOTHY RONALD</div><div class="serif size-lg" style="line-height:1.2;">3 hal soal<br>content yang<br>gue <span class="italic">curi</span> darinya.</div><div class="mono size-xs" style="margin-top:14px; opacity:0.5;">▶ 00:42</div></div>` },
+  { bg: 'bg-canvas-plain', html: `<div class="content" style="justify-content:flex-end;"><div class="serif size-lg italic" style="line-height:1.3;">Volume tanpa<br>pemahaman<br>cuma <span style="font-style:normal;">noise.</span></div><div class="mono size-xs" style="margin-top:22px; opacity:0.5;">— LIREN · WEEK 02</div></div>` },
+];
+
+const SEED_POSTS_META = [
+  { type: 'reel',     pillar: 'HOT-TAKE',    caption: '6 meeting Senin, 0 catatan manual. Agent-nya yang rangkum semuanya. Link di bio.' },
+  { type: 'carousel', pillar: 'HOT-TAKE',    caption: 'Unpopular opinion: posting tiap hari ≠ konsistensi.' },
+  { type: 'carousel', pillar: 'HOT-TAKE',    caption: 'Shadowban itu myth. Content yang ga di-save itu nyata.' },
+  { type: 'reel',     pillar: 'LIST',        caption: '30 cara buka LinkedIn post yang gak cringe. Swipe atau download PDF gratis di bio.' },
+  { type: 'carousel', pillar: 'TEARDOWN',    caption: 'Kenapa Reel Vina Muliana tembus 2.4M views? Teardown 6 slide.' },
+  { type: 'reel',     pillar: 'TOOL-DROP',   caption: '5 tools AI yang gue pakai minggu ini. Agent Meeting jadi MVP.' },
+  { type: 'still',    pillar: 'PHILOSOPHY',  caption: '己欲立而立人 — untuk membangun diri sendiri, bantu orang lain bangkit dulu. Konghucu, 2500 tahun yang lalu.' },
+  { type: 'carousel', pillar: 'EDUCATION',   caption: '11 hal yang kamu kira AI udah bisa. Spoiler: belum.' },
+  { type: 'reel',     pillar: 'FOUNDER',     caption: 'Note dari kamar kos di Hangzhou. Minggu pertama bangun Liren.' },
+  { type: 'carousel', pillar: 'EDUCATION',   caption: 'Agent ≠ Chatbot. 6 slide untuk ngerti bedanya.' },
+  { type: 'reel',     pillar: 'TREND-RIFF',  caption: '2 jam nonton Timothy Ronald. 3 hal soal content yang gue curi.' },
+  { type: 'still',    pillar: 'APHORISM',    caption: 'Volume tanpa pemahaman cuma noise. — Liren, Week 02.' },
+];
+
+function defaultState() {
+  return {
+    profile: {
+      username: 'liren.labs',
+      name: 'Liren Labs · 立人',
+      bio: 'AI agents yang bantu kamu berdiri lebih tinggi.\nJakarta · Hangzhou · Bahasa-first.\n🔗 lirenlabs.ai',
+      avatar: null,
+    },
+    posts: SEED_POSTS_META.map((m, i) => ({
+      id: uid(),
+      type: m.type,
+      pillar: m.pillar,
+      caption: m.caption,
+      slides: [{ kind: 'design', templateIdx: i }],
+    })),
+  };
+}
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    if (!parsed.profile || !Array.isArray(parsed.posts)) return defaultState();
+    return parsed;
+  } catch { return defaultState(); }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    toast('Could not save — storage full. Try fewer images or smaller files.');
+  }
+}
+
+/* ================================================================
+   RENDERING
+================================================================ */
+function renderProfile() {
+  document.getElementById('username').value = state.profile.username;
+  document.getElementById('profileName').value = state.profile.name;
+  document.getElementById('profileBio').value = state.profile.bio;
+  const avatar = document.getElementById('avatar');
+  const mark = document.getElementById('avatarMark');
+  const existing = avatar.querySelector('img');
+  if (existing) existing.remove();
+  if (state.profile.avatar) {
+    const img = document.createElement('img');
+    img.src = state.profile.avatar;
+    avatar.appendChild(img);
+    mark.style.display = 'none';
+  } else {
+    mark.style.display = '';
+    mark.textContent = (state.profile.username[0] || 'L').toUpperCase();
+  }
+  // mini avatar
+  const mini = document.getElementById('miniAvatar');
+  mini.innerHTML = '';
+  if (state.profile.avatar) {
+    const img = document.createElement('img'); img.src = state.profile.avatar; mini.appendChild(img);
+  } else {
+    const m = document.createElement('div'); m.className = 'mark'; m.textContent = (state.profile.username[0] || 'L').toUpperCase(); mini.appendChild(m);
+  }
+  document.getElementById('miniUsername').textContent = state.profile.username;
+  document.getElementById('statPosts').textContent = state.posts.length;
+  document.getElementById('metaCount').textContent = `${state.posts.length} POSTS · PLAN MODE`;
+}
+
+function cornerIconSvg(type) {
+  if (type === 'reel')     return `<svg viewBox="0 0 24 24"><path d="M4 3v18l16-9L4 3z"/></svg>`;
+  if (type === 'carousel') return `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="3" width="14" height="14" rx="2" fill="currentColor" opacity="0.9"/></svg>`;
+  return '';
+}
+
+// Render a single slide's visual (either a photo or a design template)
+function renderSlideInner(slide) {
+  if (slide.kind === 'photo') {
+    return `<img class="photo" src="${escapeAttr(slide.src)}" alt="" />`;
+  }
+  const tpl = DESIGN_TEMPLATES[slide.templateIdx] || DESIGN_TEMPLATES[0];
+  // Note: design markup must not include outer .tile — caller supplies the tile wrapper
+  return tpl.html;
+}
+
+// Return the bg class a slide should give to its wrapper
+function slideBgClass(slide) {
+  if (slide.kind === 'photo') return 'has-photo dark';
+  const tpl = DESIGN_TEMPLATES[slide.templateIdx] || DESIGN_TEMPLATES[0];
+  return tpl.bg;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  state.posts.forEach((post, idx) => {
+    const firstSlide = post.slides[0] || { kind: 'design', templateIdx: 0 };
+    const bgClass = slideBgClass(firstSlide);
+    const tile = document.createElement('div');
+    tile.className = `tile ${bgClass}`;
+    tile.setAttribute('draggable', 'true');
+    tile.dataset.postId = post.id;
+    tile.dataset.index = idx;
+
+    tile.innerHTML = `
+      ${post.pillar ? `<span class="pillar">${escapeHtml(post.pillar)} · ${escapeHtml(post.type)}</span>` : ''}
+      ${post.type !== 'still' ? `<div class="corner-icon">${cornerIconSvg(post.type)}</div>` : ''}
+      ${renderSlideInner(firstSlide)}
+      <span class="lw">立人</span>
+      <div class="tile-drag" title="Drag to reorder">⋮⋮</div>
+      <div class="tile-hover">
+        <span class="stat"><svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-12a5 5 0 019-3 5 5 0 019 3c0 7-8 12-8 12z"/></svg> ${Math.floor(Math.random()*800)+40}</span>
+        <span class="stat"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 01-4 4H7l-4 4V5a4 4 0 014-4h10a4 4 0 014 4z"/></svg> ${Math.floor(Math.random()*60)+5}</span>
+      </div>
+    `;
+
+    tile.addEventListener('click', (e) => {
+      if (e.target.closest('.tile-drag')) return;
+      openModal(post.id);
+    });
+
+    // drag-reorder
+    tile.addEventListener('dragstart', onDragStart);
+    tile.addEventListener('dragend', onDragEnd);
+    tile.addEventListener('dragover', onDragOver);
+    tile.addEventListener('dragleave', onDragLeave);
+    tile.addEventListener('drop', onDrop);
+
+    grid.appendChild(tile);
+  });
+
+  // Add-tile button
+  const addTile = document.createElement('div');
+  addTile.className = 'tile add-tile';
+  addTile.innerHTML = `<div class="plus">+</div><div class="lbl">New Post</div>`;
+  addTile.addEventListener('click', addNewPost);
+  grid.appendChild(addTile);
+}
+
+/* ================================================================
+   DRAG & DROP REORDER
+================================================================ */
+let dragSrcId = null;
+
+function onDragStart(e) {
+  dragSrcId = e.currentTarget.dataset.postId;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', dragSrcId); } catch {}
+}
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+  dragSrcId = null;
+}
+function onDragOver(e) {
+  if (!dragSrcId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const tile = e.currentTarget;
+  if (tile.dataset.postId !== dragSrcId) tile.classList.add('drop-target');
+}
+function onDragLeave(e) { e.currentTarget.classList.remove('drop-target'); }
+function onDrop(e) {
+  e.preventDefault();
+  const tile = e.currentTarget;
+  tile.classList.remove('drop-target');
+  const targetId = tile.dataset.postId;
+  if (!dragSrcId || !targetId || dragSrcId === targetId) return;
+  const fromIdx = state.posts.findIndex(p => p.id === dragSrcId);
+  const toIdx   = state.posts.findIndex(p => p.id === targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const [moved] = state.posts.splice(fromIdx, 1);
+  state.posts.splice(toIdx, 0, moved);
+  saveState();
+  renderGrid();
+}
+
+/* ================================================================
+   MODAL
+================================================================ */
+let openPostId = null;
+let currentSlideIdx = 0;
+
+function openModal(postId) {
+  openPostId = postId;
+  currentSlideIdx = 0;
+  renderModal();
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  openPostId = null;
+  document.getElementById('modalBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function currentPost() { return state.posts.find(p => p.id === openPostId); }
+
+function renderModal() {
+  const post = currentPost();
+  if (!post) return;
+
+  // Preview
+  const mp = document.getElementById('modalPreview');
+  mp.innerHTML = '';
+  const canvas = document.createElement('div');
+  canvas.className = 'mp-canvas';
+
+  post.slides.forEach((slide, i) => {
+    const s = document.createElement('div');
+    s.className = 'slide' + (i === currentSlideIdx ? ' active' : '');
+    const bgClass = slideBgClass(slide);
+    const wrap = document.createElement('div');
+    wrap.className = `tile-render tile ${bgClass}`;
+    wrap.style.position = 'absolute';
+    wrap.style.inset = '0';
+    wrap.style.cursor = 'default';
+    wrap.innerHTML = `
+      ${post.pillar ? `<span class="pillar">${escapeHtml(post.pillar)}</span>` : ''}
+      ${post.type === 'reel' && i === 0 ? `<div class="corner-icon">${cornerIconSvg('reel')}</div>` : ''}
+      ${renderSlideInner(slide)}
+      <span class="lw">立人</span>
+    `;
+    s.appendChild(wrap);
+    canvas.appendChild(s);
+  });
+
+  // Nav arrows for carousel
+  if (post.slides.length > 1) {
+    const prev = document.createElement('button');
+    prev.className = 'mp-nav prev';
+    prev.innerHTML = '‹';
+    prev.disabled = currentSlideIdx === 0;
+    prev.addEventListener('click', () => { if (currentSlideIdx > 0) { currentSlideIdx--; renderModal(); } });
+    const next = document.createElement('button');
+    next.className = 'mp-nav next';
+    next.innerHTML = '›';
+    next.disabled = currentSlideIdx >= post.slides.length - 1;
+    next.addEventListener('click', () => { if (currentSlideIdx < post.slides.length - 1) { currentSlideIdx++; renderModal(); } });
+    canvas.appendChild(prev);
+    canvas.appendChild(next);
+
+    const dots = document.createElement('div');
+    dots.className = 'mp-dots';
+    post.slides.forEach((_, i) => {
+      const d = document.createElement('span');
+      if (i === currentSlideIdx) d.classList.add('active');
+      dots.appendChild(d);
+    });
+    canvas.appendChild(dots);
+
+    const count = document.createElement('div');
+    count.className = 'mp-count';
+    count.textContent = `${currentSlideIdx + 1} / ${post.slides.length}`;
+    canvas.appendChild(count);
+  }
+
+  mp.appendChild(canvas);
+
+  // Editor form
+  document.querySelectorAll('.type-row .tb').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === post.type);
+  });
+  document.getElementById('pillarSelect').value = post.pillar || 'HOT-TAKE';
+  document.getElementById('captionInput').value = post.caption || '';
+
+  renderSlidesList();
+}
+
+function renderSlidesList() {
+  const post = currentPost();
+  const list = document.getElementById('slidesList');
+  list.innerHTML = '';
+  post.slides.forEach((slide, i) => {
+    const item = document.createElement('div');
+    item.className = 'slide-item';
+    const thumb = slide.kind === 'photo'
+      ? `<div class="thumb"><img src="${escapeAttr(slide.src)}" alt=""/></div>`
+      : `<div class="thumb design">A</div>`;
+    const label = slide.kind === 'photo' ? 'Photo' : 'Design template';
+    item.innerHTML = `
+      ${thumb}
+      <div class="meta">
+        <b>Slide ${i + 1}</b>
+        ${label}${slide.kind === 'photo' && slide.filename ? ' · ' + escapeHtml(slide.filename) : ''}
+      </div>
+      <div class="actions">
+        ${i > 0 ? `<button class="mv" data-dir="-1" data-i="${i}" title="Move up">↑</button>` : ''}
+        ${i < post.slides.length - 1 ? `<button class="mv" data-dir="1" data-i="${i}" title="Move down">↓</button>` : ''}
+        <button class="rm" data-i="${i}" title="Remove">✕</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.rm').forEach(b => b.addEventListener('click', (e) => {
+    const i = +e.currentTarget.dataset.i;
+    const p = currentPost();
+    if (p.slides.length === 1) {
+      toast('A post needs at least one slide.');
+      return;
+    }
+    p.slides.splice(i, 1);
+    if (currentSlideIdx >= p.slides.length) currentSlideIdx = p.slides.length - 1;
+    // auto-adjust type if slide count drops to 1
+    if (p.slides.length === 1 && p.type === 'carousel') p.type = 'still';
+    saveState();
+    renderModal();
+    renderGrid();
+  }));
+  list.querySelectorAll('.mv').forEach(b => b.addEventListener('click', (e) => {
+    const i = +e.currentTarget.dataset.i;
+    const dir = +e.currentTarget.dataset.dir;
+    const p = currentPost();
+    const j = i + dir;
+    if (j < 0 || j >= p.slides.length) return;
+    [p.slides[i], p.slides[j]] = [p.slides[j], p.slides[i]];
+    if (currentSlideIdx === i) currentSlideIdx = j;
+    else if (currentSlideIdx === j) currentSlideIdx = i;
+    saveState();
+    renderModal();
+    renderGrid();
+  }));
+}
+
+/* ================================================================
+   EDITING HANDLERS
+================================================================ */
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+  if (e.target.id === 'modalBackdrop') closeModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (!openPostId) return;
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'ArrowLeft') {
+    if (currentSlideIdx > 0) { currentSlideIdx--; renderModal(); }
+  }
+  if (e.key === 'ArrowRight') {
+    const p = currentPost();
+    if (p && currentSlideIdx < p.slides.length - 1) { currentSlideIdx++; renderModal(); }
+  }
+});
+
+document.querySelectorAll('.type-row .tb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const post = currentPost();
+    if (!post) return;
+    post.type = btn.dataset.type;
+    saveState();
+    renderModal();
+    renderGrid();
+  });
+});
+
+document.getElementById('pillarSelect').addEventListener('change', (e) => {
+  const post = currentPost(); if (!post) return;
+  post.pillar = e.target.value;
+  saveState();
+  renderModal();
+  renderGrid();
+});
+document.getElementById('captionInput').addEventListener('input', (e) => {
+  const post = currentPost(); if (!post) return;
+  post.caption = e.target.value;
+  saveState();
+});
+
+/* ---- Upload photo(s) ---- */
+const filePicker = document.getElementById('filePicker');
+document.getElementById('addPhotoBtn').addEventListener('click', () => filePicker.click());
+filePicker.addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  const post = currentPost(); if (!post) return;
+  for (const file of files) {
+    const dataUrl = await readAsDataURL(file);
+    post.slides.push({ kind: 'photo', src: dataUrl, filename: file.name });
+  }
+  if (post.slides.length > 1) {
+    // If only 1 slide was design and we added a photo, promote to carousel unless user picks still
+    if (post.type === 'still') post.type = 'carousel';
+  }
+  currentSlideIdx = post.slides.length - 1;
+  filePicker.value = '';
+  saveState();
+  renderModal();
+  renderGrid();
+});
+
+/* ---- Add photo from URL ---- */
+document.getElementById('addUrlBtn').addEventListener('click', () => {
+  const url = prompt('Image URL:');
+  if (!url) return;
+  const post = currentPost(); if (!post) return;
+  post.slides.push({ kind: 'photo', src: url.trim(), filename: 'url' });
+  if (post.slides.length > 1 && post.type === 'still') post.type = 'carousel';
+  currentSlideIdx = post.slides.length - 1;
+  saveState();
+  renderModal();
+  renderGrid();
+});
+
+document.getElementById('deletePostBtn').addEventListener('click', () => {
+  const post = currentPost(); if (!post) return;
+  if (!confirm('Delete this post? This cannot be undone.')) return;
+  state.posts = state.posts.filter(p => p.id !== post.id);
+  saveState();
+  closeModal();
+  renderProfile();
+  renderGrid();
+});
+
+document.getElementById('doneBtn').addEventListener('click', closeModal);
+
+/* ================================================================
+   PROFILE EDITING
+================================================================ */
+const avatarPicker = document.getElementById('avatarPicker');
+document.getElementById('avatar').addEventListener('click', () => avatarPicker.click());
+avatarPicker.addEventListener('change', async (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  state.profile.avatar = await readAsDataURL(f);
+  avatarPicker.value = '';
+  saveState();
+  renderProfile();
+});
+
+document.getElementById('username').addEventListener('input', (e) => {
+  state.profile.username = e.target.value || 'username';
+  saveState();
+  // update mini avatar label without redrawing avatar image
+  document.getElementById('miniUsername').textContent = state.profile.username;
+});
+document.getElementById('profileName').addEventListener('input', (e) => {
+  state.profile.name = e.target.value;
+  saveState();
+});
+document.getElementById('profileBio').addEventListener('input', (e) => {
+  state.profile.bio = e.target.value;
+  saveState();
+});
+
+/* ================================================================
+   TOP NAV ACTIONS
+================================================================ */
+document.getElementById('addPostBtn').addEventListener('click', addNewPost);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset everything back to the default mockup? Your edits will be lost.')) return;
+  state = defaultState();
+  saveState();
+  renderProfile();
+  renderGrid();
+  toast('Reset to default.');
+});
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `liren-grid-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported JSON.');
+});
+const jsonPicker = document.getElementById('jsonPicker');
+document.getElementById('importBtn').addEventListener('click', () => jsonPicker.click());
+jsonPicker.addEventListener('change', async (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  try {
+    const txt = await f.text();
+    const parsed = JSON.parse(txt);
+    if (!parsed.profile || !Array.isArray(parsed.posts)) throw new Error('bad schema');
+    state = parsed;
+    saveState();
+    renderProfile();
+    renderGrid();
+    toast('Imported.');
+  } catch (err) {
+    toast('Could not import — invalid JSON.');
+  }
+  jsonPicker.value = '';
+});
+
+function addNewPost() {
+  const post = {
+    id: uid(),
+    type: 'still',
+    pillar: 'HOT-TAKE',
+    caption: '',
+    slides: [{ kind: 'design', templateIdx: Math.floor(Math.random() * DESIGN_TEMPLATES.length) }],
+  };
+  state.posts.push(post);
+  saveState();
+  renderProfile();
+  renderGrid();
+  openModal(post.id);
+}
+
+/* ================================================================
+   UTIL
+================================================================ */
+function readAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ================================================================
+   INIT
+================================================================ */
+renderProfile();
+renderGrid();
+</script>
+</body>
+</html>
