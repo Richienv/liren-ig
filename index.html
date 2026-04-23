@@ -44,47 +44,6 @@
   button { font-family: inherit; }
   input, textarea { font-family: inherit; }
 
-  /* ============ TOP NAV ============ */
-  .topnav {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background: rgba(0,0,0,0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--ig-border);
-  }
-  .topnav-inner {
-    max-width: 975px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-  }
-  .topnav-brand {
-    font-family: 'Instrument Serif', serif;
-    font-size: 22px;
-    letter-spacing: -0.01em;
-  }
-  .topnav-brand .zh { font-family: 'Noto Serif SC', serif; font-size: 18px; opacity: 0.55; margin-left: 6px; }
-  .topnav-actions { display: flex; gap: 8px; align-items: center; }
-  .tnbtn {
-    background: var(--ig-panel-2);
-    color: #fff;
-    border: 1px solid var(--ig-border);
-    padding: 7px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .tnbtn:hover { background: #262626; }
-  .tnbtn.danger:hover { background: #3a1a1d; border-color: #6b2530; color: #ff6b75; }
-  .tnbtn.primary { background: var(--ig-blue); border-color: var(--ig-blue); }
-  .tnbtn.primary:hover { background: var(--ig-blue-hover); }
-
   /* ============ PAGE SHELL ============ */
   .wrap {
     max-width: 975px;
@@ -493,53 +452,6 @@
   .tile.add-tile .plus { font-size: 42px; font-weight: 200; line-height: 1; }
   .tile.add-tile .lbl { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
 
-  /* ============ LEGEND ============ */
-  .legend {
-    margin-top: 40px;
-    padding: 24px;
-    background: #0b0b0b;
-    border: 1px solid var(--ig-border);
-    border-radius: 10px;
-  }
-  .legend h3 {
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ig-muted);
-    font-weight: 500;
-    margin-bottom: 16px;
-  }
-  .legend-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px 32px;
-    font-size: 13px;
-    color: #d4d4d4;
-  }
-  .legend-grid .key {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    background: #1c1c1c;
-    padding: 3px 7px;
-    border-radius: 3px;
-    margin-right: 10px;
-    color: #fff;
-  }
-  .legend small { color: var(--ig-muted); font-size: 11px; display: block; margin-top: 2px; }
-
-  /* ============ PAGE META ============ */
-  .page-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding-bottom: 24px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid #1a1a1a;
-  }
-  .page-meta h1 { font-family: 'Instrument Serif', serif; font-size: 28px; font-weight: 400; color: #fff; }
-  .page-meta .caption { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ig-muted); letter-spacing: 0.06em; text-transform: uppercase; }
-
   /* ============ MODAL ============ */
   .modal-backdrop {
     position: fixed; inset: 0;
@@ -919,25 +831,7 @@
 </head>
 <body>
 
-<!-- TOP NAV -->
-<nav class="topnav">
-  <div class="topnav-inner">
-    <div class="topnav-brand">Grid Planner <span class="zh">立人</span></div>
-    <div class="topnav-actions">
-      <button class="tnbtn" id="exportBtn" title="Download state as JSON">Export</button>
-      <button class="tnbtn" id="importBtn" title="Import state JSON">Import</button>
-      <button class="tnbtn danger" id="resetBtn" title="Reset to default mockup">Reset</button>
-      <button class="tnbtn primary" id="addPostBtn">+ New Post</button>
-    </div>
-  </div>
-</nav>
-
 <div class="wrap">
-
-  <div class="page-meta">
-    <h1>Liren Labs — Grid Planner <span style="opacity:0.4; font-size:20px;">v1</span></h1>
-    <div class="caption" id="metaCount">LOADING…</div>
-  </div>
 
   <!-- PROFILE HEADER -->
   <section class="profile">
@@ -993,30 +887,6 @@ Jakarta · Hangzhou · Bahasa-first.
 
   <!-- GRID (rendered dynamically) -->
   <div class="grid" id="grid"></div>
-
-  <!-- LEGEND -->
-  <div class="legend">
-    <h3>Pillar Legend · Proposed Mix (Month 1)</h3>
-    <div class="legend-grid">
-      <div><span class="key">HOT-TAKE</span> 35% · meta-content, contrarian opinions
-        <small>lo/gue register OK. Thumb-stop hooks on Canvas or Ink.</small></div>
-      <div><span class="key">TEARDOWN</span> 20% · why other IDN creators went viral
-        <small>Vina Muliana, Raditya Dika, Timothy Ronald, Gita Savitri as raw material.</small></div>
-      <div><span class="key">EDUCATION</span> 20% · lists, frameworks, agent ≠ chatbot
-        <small>Shift from "how agents work" to "how AI changes your week."</small></div>
-      <div><span class="key">TOOL-DROP</span> 10% · agents mentioned as utilities
-        <small>Product appears at slide 4 of 6, never centered. kamu register.</small></div>
-      <div><span class="key">PHILOSOPHY</span> 10% · 立人, Confucius, slow posts
-        <small>kamu only. Chrome pin + Noto Serif SC. Scarce by design.</small></div>
-      <div><span class="key">FOUNDER</span> 5% · Richie from Hangzhou / Jakarta
-        <small>Real and scarce. Conversion asks land here first.</small></div>
-    </div>
-    <div style="margin-top:20px; padding-top:16px; border-top:1px solid #1a1a1a; font-size:12px; color:var(--ig-muted); line-height:1.55;">
-      <b style="color:#fff; font-weight:500;">Voice rule:</b> lo/gue allowed on hot-takes, teardowns, and trend riffs.
-      Hard switch back to <i>kamu</i> the moment copy touches product, positioning, or 立人 philosophy.
-      The grid signals the register through format — brown/cream warm cards = lo/gue, chrome stills + kamu posts = formal mode.
-    </div>
-  </div>
 
 </div>
 
@@ -1708,18 +1578,21 @@ document.getElementById('profileBio').addEventListener('input', (e) => {
 });
 
 /* ================================================================
-   TOP NAV ACTIONS
+   ADMIN ACTIONS
+   Top-nav buttons are gone (see Task 5 — chrome stripped). Task 6 will
+   re-wire these through the profile ⋯ action sheet. Functions are
+   hoisted / named so they remain reachable for that task.
 ================================================================ */
-document.getElementById('addPostBtn').addEventListener('click', addNewPost);
-document.getElementById('resetBtn').addEventListener('click', () => {
+function doReset() {
   if (!confirm('Reset everything back to the default mockup? Your edits will be lost.')) return;
   state = defaultState();
   saveState();
   renderProfile();
   renderGrid();
   toast('Reset to default.');
-});
-document.getElementById('exportBtn').addEventListener('click', () => {
+}
+
+function doExport() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1728,9 +1601,11 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
   toast('Exported JSON.');
-});
+}
+
 const jsonPicker = document.getElementById('jsonPicker');
-document.getElementById('importBtn').addEventListener('click', () => jsonPicker.click());
+function doImport() { jsonPicker.click(); }
+
 jsonPicker.addEventListener('change', async (e) => {
   const f = e.target.files?.[0]; if (!f) return;
   try {
